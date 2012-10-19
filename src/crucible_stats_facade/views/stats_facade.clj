@@ -1,31 +1,26 @@
 (ns crucible-stats-facade.views.stats_facade
   (:require [cheshire.core :as json]
             [crucible-stats-facade.crucible-mockclient :as client])
-  (:use [noir.core :only [defpage]]))
+  (:use [noir.core :only [defpage]]
+        [crucible-stats-facade.utils]))
+
+(def cached-reviews (atom {:updated nil :reviews nil}))
+
+(defn update-cached-reviews []
+  (swap! cached-reviews assoc :updated (now) :reviews (client/reviews)))
+
+(defn get-reviews []
+  (if-let [reviews (:reviews @cached-reviews)]
+    reviews
+    (:reviews (update-cached-reviews))))
 
 
-(defn in? [seq elm]
-  (some #(= elm %) seq))
-
-(defn not-in? [seq elm]
-  (not (in? seq elm)))
-
-(defn null-safe-split [str pattern default-if-null]
-  (if str
-     (clojure.string/split str pattern)
-     default-if-null))
-
-(defn to-date [date-str]
-  (identity {:year (.substring date-str 0 4)
-             :month (.substring date-str 5 7)
-             :date (.substring date-str 8 10)}))
-  
 (defn review-dates [review-vector]
   (map (fn [review] (to-date (get-in review [:reviewData :createDate]))) review-vector))
 
 (defn group-reviews-by-month [review-vector]
   (map (fn [pair] {:year (first (first pair)) :month (second (first pair)) :count (count (second pair))}) 
-        (group-by (juxt :year :month) (review-dates review-vector))))
+    (group-by (juxt :year :month) (review-dates review-vector))))
 
 (defn group-reviews-by-author [review-vector]
   (let [authors (map (fn [review] (get-in review [:reviewData :author :userName])) review-vector)]
@@ -43,9 +38,8 @@
   (project-key-filter excluded-projects-str))
 
 
-
 (defpage "/reviews-per-month" {:keys [excludedProjects sinceDate]}
   (json/encode 
     (group-reviews-by-month 
-      (filter (create-filters excludedProjects sinceDate) (client/reviews)))))
+      (filter (create-filters excludedProjects sinceDate) (get-reviews)))))
 
