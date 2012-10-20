@@ -13,12 +13,12 @@
          (json/encode {:projects [{:projectData {:key "CR"}}
                                   {:projectData {:key "Public"}}]} {:pretty true}))
 
-(defn mock-comments []
-  {:comments [{:generalCommentData {:message "foo" :user {:userName "pertti"}}}
-              {:versionedLineCommentData {:message "foo2" :user {:userName "purtti"}}}]})
+(defn mock-comments [review-id]
+  {:comments [{:generalCommentData {:message (str review-id " generalcomment") :user {:userName "pertti"}}}
+              {:versionedLineCommentData {:message (str review-id " comment") :user {:userName "purtti"}}}]})
 
-(defpage "/rest-service/reviews-v1/:id/comments" {:keys [review-id]}
-         (json/encode (mock-comments)))
+(defpage "/rest-service/reviews-v1/:id/comments" {:keys [id]}
+         (json/encode (mock-comments id)))
 
 (defn mock-reviews []
   {:reviews [{:reviewData {:author {:userName "pertti1"} :createDate "2012-01-15T15:59:49.855+1000" :permaId {:id "CR-1"} :projectKey "CR"}}

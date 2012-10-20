@@ -16,5 +16,8 @@
              :month (.substring date-str 5 7)
              :date (.substring date-str 8 10)}))
 
+(defn to-str [date-map]
+  (str (:year date-map) "-" (:month date-map) "-" (:date date-map)))
+
 (defn now []
   (java.util.Date.))

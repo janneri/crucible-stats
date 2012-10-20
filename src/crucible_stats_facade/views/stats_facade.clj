@@ -14,12 +14,14 @@
     reviews
     (:reviews (update-cached-reviews))))
 
+(defn review-date [review]
+  (to-date (get-in review [:reviewData :createDate])))
 
 (defn review-dates [review-vector]
-  (map (fn [review] (to-date (get-in review [:reviewData :createDate]))) review-vector))
+  (map (fn [review] (review-date) review-vector)))
 
 (defn group-reviews-by-month [review-vector]
-  (map (fn [pair] {:year (first (first pair)) :month (second (first pair)) :count (count (second pair))}) 
+  (map (fn [[[y m] s]] {:year y :month m :count (count s)}) 
     (group-by (juxt :year :month) (review-dates review-vector))))
 
 (defn group-reviews-by-author [review-vector]
@@ -29,17 +31,26 @@
 (defn included-by-project? [excluded-project-keys review]
   (not-in? excluded-project-keys (get-in review [:reviewData :projectKey])))
 
-(defn project-key-filter [excluded-projects-str]
+(defn project-key-filter [excluded-projects-str review]
   (if-let [excluded-project-keys (null-safe-split excluded-projects-str #"," [])]
-    (partial included-by-project? excluded-project-keys)
+    (included-by-project? excluded-project-keys review)
     (fn [review] true)))
 
-(defn create-filters [excluded-projects-str since-str] ; todo sincedate
-  (project-key-filter excluded-projects-str))
+(defn since-filter [since-str review]
+  (if since-str
+    (> 0 (compare since-str (to-str (review-date review))))
+    (fn [review] true)))
 
+(defn combine-filters [filters review] 
+  (every? #(= true %) (map #(% review) filters)))
 
+(defn create-filters [excluded-projects-str since-str review]
+  (combine-filters [(partial since-filter since-str) 
+                    (partial project-key-filter excluded-projects-str)] 
+    review))
+  
 (defpage "/reviews-per-month" {:keys [excludedProjects sinceDate]}
   (json/encode 
     (group-reviews-by-month 
-      (filter (create-filters excludedProjects sinceDate) (get-reviews)))))
+      (filter #(create-filters excludedProjects sinceDate %) (get-reviews)))))
 
