@@ -1,4 +1,4 @@
-(ns crucible-stats-facade.crucible-mockclient
+(ns crucible-stats-facade.crucible-client
   (:require [cheshire.core :as json]
             [clojure.xml :as xml]
             [clj-http.client :as client]))
@@ -34,19 +34,12 @@
   (let [json-data (json/parse-string (:body (client/get projects-uri)) true)
         projects (:projects json-data)]
     (map (fn [pdata] (get-in pdata [:projectData :key])) projects)))
-                   
-(defn user-of-comment [comment-data]
-  (if (:generalCommentData comment-data) 
-    (get-in comment-data [:generalCommentData :user :userName])
-    (get-in comment-data [:versionedLineCommentData :user :userName])))
+
 
 (defn comments [review-id]
   (let [json-data (json/parse-string (:body (client/get (comments-uri review-id))) true)
         comments (:comments json-data)]
     comments))
-
-;(defn comment-count-by-users [review-ids]
-;  (map #() (map user-of-comment (comments "foo"))))
 
 (defn reviews []
   (let [json-data (json/parse-string (:body (client/get reviews-uri)) true)

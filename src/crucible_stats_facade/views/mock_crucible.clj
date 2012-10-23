@@ -1,4 +1,4 @@
-(ns crucible_stats_facade.views.crucible-mock-service
+(ns crucible_stats_facade.views.mock-crucible
   (:require [cheshire.core :as json])
   (:use [noir.core :only [defpage]]))
 
