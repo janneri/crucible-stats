@@ -17,6 +17,23 @@
   {:comments [{:generalCommentData {:message (str review-id " generalcomment") :user {:userName "pertti"}}}
               {:versionedLineCommentData {:message (str review-id " comment") :user {:userName "purtti"}}}]})
 
+
+(defn xml-comments []
+  "<comments>
+    <generalCommentData>
+        <message>I thought you said you were going to remove this line</message>
+        <user>
+            <userName>pertti</userName>
+        </user>
+    </generalCommentData>
+    <versionedLineCommentData>
+        <message>some message</message>
+        <user>
+            <userName>purtti</userName>
+        </user>
+    </versionedLineCommentData>
+  </comments>")
+
 (defpage "/rest-service/reviews-v1/:id/comments" {:keys [id]}
          (json/encode (mock-comments id)))
 
