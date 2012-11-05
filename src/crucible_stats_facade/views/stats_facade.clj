@@ -2,6 +2,7 @@
   (:require [cheshire.core :as json]
             [crucible-stats-facade.crucible-client :as client])
   (:use [noir.core :only [defpage]]
+        [clj-time.local :only [local-now]]
         [crucible-stats-facade.utils]))
 
 (def cached-data (atom {:reviews-updated nil :reviews nil
@@ -14,9 +15,9 @@
 
 (declare comment-stats-for-all get-review-ids)
 
-(defn update-cached-comments [reviews]
+(defn update-cached-comments [review-ids]
   (swap! cached-data assoc :comments-updated (now) 
-         :comments (comment-stats-for-all reviews)))
+         :comments (comment-stats-for-all review-ids)))
 
 (defn update-cached-reviews []
   (swap! cached-data assoc :reviews-updated (now) :reviews (client/reviews)))
@@ -78,12 +79,9 @@
                          frequencies)]
     {:author author, :count count}))
 
-(defn included-by-project? [excluded-project-keys review]
-  (not-in? excluded-project-keys (get-in review [:reviewData :projectKey])))
-
-(defn project-key-filter [excluded-projects-str review]
-  (if-let [excluded-project-keys (null-safe-split excluded-projects-str #"," [])]
-    (included-by-project? excluded-project-keys review)
+(defn project-filter [predicate-fn projects-str review]
+  (if-let [project-keys (null-safe-split projects-str #"," false)]
+    (predicate-fn project-keys (get-in review [:reviewData :projectKey]))
     true))
 
 (defn since-filter [since-str review]
@@ -91,13 +89,17 @@
     (> 0 (compare since-str (to-str (review-date review))))
     true))
 
-
-;(defpage "/update-cache" {:keys [sinceDate]}
-;  (json/encode 
+(defpage "/update-cache" {:keys [username password]}
+  (println "updating cache started at" (local-now))  
+  (client/login-and-get-token username password)
+  (update-cached-reviews)
+  (update-cached-comments (get-review-ids))
+  (println "done at" (local-now)))
     
-(defpage "/reviews-per-month" {:keys [excludedProjects sinceDate]}
+(defpage "/reviews-per-month" {:keys [excludedProjects includedProjects sinceDate]}
   (json/encode 
     (group-reviews-by-month 
       (filter (every-pred (partial since-filter sinceDate)
-                          (partial project-key-filter excludedProjects))
+                          (partial project-filter not-in? excludedProjects)
+                          (partial project-filter in? includedProjects))
               (get-reviews)))))

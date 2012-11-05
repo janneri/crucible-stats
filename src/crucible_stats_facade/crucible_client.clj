@@ -37,7 +37,7 @@
 
 
 (defn comments [review-id]
-  (let [json-data (json/parse-string (:body (client/get ((comments-uri) review-id))) true)
+  (let [json-data (json/parse-string (:body (client/get (comments-uri review-id))) true)
         comments (:comments json-data)]
     comments))
 
