@@ -6,6 +6,9 @@
 (defn not-in? [seq elm]
   (not (in? seq elm)))
 
+(defn find-first [pred col]
+  (first (filter pred col)))
+
 (defn null-safe-split [str pattern default-if-null]
   (if str
      (clojure.string/split str pattern)
