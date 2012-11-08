@@ -6,3 +6,9 @@
 
 (defn create-date [review]
   (to-date (get-in review [:reviewData :createDate])))
+
+(defn project-key [review]
+  (get-in review [:reviewData :projectKey]))
+
+(defn author [review]
+  ((comp :userName :author :reviewData) review))

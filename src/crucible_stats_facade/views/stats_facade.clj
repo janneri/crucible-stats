@@ -26,13 +26,13 @@
 
 (defn group-reviews-by-author [review-vector]
   (for [[author count] (->> review-vector
-                         (map (comp :userName :author :reviewData))
+                         (map author)
                          frequencies)]
     {:author author, :count count}))
 
 (defn project-filter [predicate-fn projects-str review]
   (if-let [project-keys (null-safe-split projects-str #"," false)]
-    (predicate-fn project-keys (get-in review [:reviewData :projectKey]))
+    (predicate-fn project-keys (project-key review))
     true))
 
 (defn since-filter [since-str review]
