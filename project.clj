@@ -1,6 +1,7 @@
 (defproject crucible_stats_facade "0.1.0-SNAPSHOT"
             :description "FIXME: write this!"
             :dependencies [[org.clojure/clojure "1.4.0"]
+                           [org.clojure/data.zip "0.1.0"]
                            [cheshire "4.0.0"]
                            [clj-http "0.5.5"]
                            [clj-time "0.4.4"]

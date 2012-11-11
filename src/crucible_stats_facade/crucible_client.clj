@@ -1,6 +1,8 @@
 (ns crucible-stats-facade.crucible-client
+  (:use [clojure.data.zip.xml :only (attr text xml1-> xml->)])
   (:require [cheshire.core :as json]
             [clojure.xml :as xml]
+            [clojure.zip :as zip]
             [clj-http.client :as client]))
 
 (defonce token (atom {}))
@@ -23,8 +25,8 @@
   (xml/parse (login-uri "foo" "bar")))
 
 (defn parse-token [xml]
-  (first (for [x (xml-seq xml) :when (= :token (:tag x))]
-           (first (:content x)))))
+  (let [zipped (zip/xml-zip xml)]
+    (xml1-> zipped :token text)))
 
 (defn login-and-get-token [username password]
   (let [new-token (parse-token (login username password))]
