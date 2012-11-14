@@ -1,28 +1,29 @@
-# A stats facade for the Crucible Rest API. 
+# A stats facade for the Crucible Rest API
 
 A small tool for getting company wide review statistics from Crucible. 
 
-Crucible has a nice Rest API, but for statistical purpose it has problems:
+Crucible has a nice Rest API, but for observing review activity it has a few problems:
 * Fetching comments for a list of reviews takes a few minutes.
-* It hard to fetch company wide stats, which are based on the details of all reviews.
-** Review details are and must be hidden, but the statistics of them are no secret
+* It hard to fetch company wide stats, which are based on the details of all reviews. This is a matter of privileges. As a Crucible User I can see only a few reviews, but I should be able to see the statistics derived from all the reviews.
 
 This tool has the following features:
 
 * Caches the slow-to-fetch review details.
-* Does not reveal the details of reviews.
-* Provides a Rest API for the cached data.
+* Reveals the statistics of all reviews, but does not reveal the details of any review.
+* Provides the following Rest API for the cached data.
 
-## Json API
+## JSON API
 
-* /update-cache?username=<value>&password=<value>
-* /reviews?<params>
-* /reviews-per-month?<params>
-* /comments?<params>
-* /userstats?<params>
+* /update-cache?username=value&password=value
+* /reviews?*params*
+* /reviews-per-month?*params*
+* /comments?*params*
+* /userstats?*params*
 
-The following optional params can be used to filter reviews:
-* excludedProjects includedProjects authors sinceDate minComments
+*params:* excludedProjects, includedProjects, authors, sinceDate, minComments
+
+The *params* are optional, but they can be used to filter reviews.
+
 
 ## How to Run
 
