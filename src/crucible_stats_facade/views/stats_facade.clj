@@ -40,8 +40,8 @@
   (:count (find-first #(= username (:author %)) count-map)))
 
 (defn user-stats [review-vector]
-  (let [author-stats (group-reviews-by-author (cache/get-reviews))]
-    (for [stat (count-comments-by-users (cache/get-reviews))] 
+  (let [author-stats (group-reviews-by-author review-vector)]
+    (for [stat (count-comments-by-users review-vector)] 
       (assoc stat :authoredreviewcount (review-count-of-author author-stats (:username stat))))))
 
 (defn project-filter [predicate-fn projects-str review]
@@ -70,12 +70,13 @@
 
 ;todo filter by authors
 (defn filtered-reviews [params]
-  (let [{:keys [excludedProjects includedProjects sinceDate minComments]} params]
+  (let [{:keys [excludedProjects includedProjects authors sinceDate minComments]} params]
     (filter 
 	    (every-pred 
 	      (partial created-since-filter sinceDate)
 	      (partial project-filter not-in? excludedProjects)
 	      (partial project-filter in? includedProjects)
+        (partial author-filter authors)
 	      (partial comment-count-filter minComments))
 	    (cache/get-reviews))))
 
