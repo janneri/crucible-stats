@@ -5,14 +5,11 @@
         [crucible-stats-facade.utils]
         [crucible-stats-facade.domain_commons]))
 
-; todo not needed?
-;(defn count-total-comments-by-users []
-;  (let [comment-maps (mapcat :comments (cache/get-comments))]
-;    (apply merge-with + comment-maps)))
+(defn comments-for-review-ids [review-ids]
+  (filter #(in? review-ids (:review-id %)) (cache/get-comments)))
 
 (defn comments-for-reviews [review-vector]
-  (let [review-ids (map id review-vector)]
-    (filter #(in? review-ids (:review-id %)) (cache/get-comments))))
+  (comments-for-review-ids (map id review-vector)))
 
 (defn create-dates [review-vector]
   (map create-date review-vector))
@@ -59,16 +56,17 @@
     (in? authors (author review))
     true))
 
-(defn get-review-comments [review-id]
-  (let [review (find-first #(= review-id (:review-id %)) (cache/get-comments))]
-    (apply merge (:comments review))))
-
 (defn comment-count-filter [comment-count-str review]
   (if comment-count-str
-    (>= (count (get-review-comments (id review))) (read-string comment-count-str))
+    (>= (:comment-count (first (comments-for-review-ids [(id review)]))) 
+        (read-string comment-count-str))
     true))
 
-;todo filter by authors
+(defn commented-filter [usernames-str review]
+  (if-let [usernames (null-safe-split usernames-str #"," false)]
+    (in? usernames (author review))
+    true))
+
 (defn filtered-reviews [params]
   (let [{:keys [excludedProjects includedProjects authors sinceDate minComments]} params]
     (filter 
