@@ -5,14 +5,14 @@
         [crucible-stats-facade.utils]
         [crucible-stats-facade.domain_commons]))
 
-(defn count-total-comments-by-users []
-  (let [comment-maps (mapcat :comments (cache/get-comments))]
-    (apply merge-with + comment-maps)))
+; todo not needed?
+;(defn count-total-comments-by-users []
+;  (let [comment-maps (mapcat :comments (cache/get-comments))]
+;    (apply merge-with + comment-maps)))
 
-; todo: not needed? multimethod in cache?
-(defn get-review-comments [review-id]
-  (let [review (find-first #(= review-id (:review-id %)) (cache/get-comments))]
-    (apply merge (:comments review))))
+(defn comments-for-reviews [review-vector]
+  (let [review-ids (map id review-vector)]
+    (filter #(in? review-ids (:review-id %)) (cache/get-comments))))
 
 (defn create-dates [review-vector]
   (map create-date review-vector))
@@ -30,31 +30,74 @@
                          frequencies)]
     {:author author, :count count}))
 
+; todo not used  
+(defn count-comments-by-users [review-vector]
+  (let [usernames (map :user (mapcat :comments (comments-for-reviews review-vector)))]
+    (map (fn [[name count]] {:username name :commentcount count}) 
+       (frequencies usernames))))
+
+(defn review-count-of-author [count-map username]
+  (:count (find-first #(= username (:author %)) count-map)))
+
+(defn user-stats [review-vector]
+  (let [author-stats (group-reviews-by-author (cache/get-reviews))]
+    (for [stat (count-comments-by-users (cache/get-reviews))] 
+      (assoc stat :authoredreviewcount (review-count-of-author author-stats (:username stat))))))
+
 (defn project-filter [predicate-fn projects-str review]
   (if-let [project-keys (null-safe-split projects-str #"," false)]
     (predicate-fn project-keys (project-key review))
     true))
 
-(defn since-filter [since-str review]
+(defn created-since-filter [since-str review]
   (if since-str
     (> 0 (compare since-str (to-str (create-date review))))
     true))
+
+(defn author-filter [authors-str review]
+  (if-let [authors (null-safe-split authors-str #"," false)]
+    (in? authors (author review))
+    true))
+
+(defn get-review-comments [review-id]
+  (let [review (find-first #(= review-id (:review-id %)) (cache/get-comments))]
+    (apply merge (:comments review))))
 
 (defn comment-count-filter [comment-count-str review]
   (if comment-count-str
     (>= (count (get-review-comments (id review))) (read-string comment-count-str))
     true))
 
+;todo filter by authors
+(defn filtered-reviews [params]
+  (let [{:keys [excludedProjects includedProjects sinceDate minComments]} params]
+    (filter 
+	    (every-pred 
+	      (partial created-since-filter sinceDate)
+	      (partial project-filter not-in? excludedProjects)
+	      (partial project-filter in? includedProjects)
+	      (partial comment-count-filter minComments))
+	    (cache/get-reviews))))
 
 (defpage "/update-cache" {:keys [username password]}
   (cache/update-cache username password)
   (json/encode {:reviewsloaded (count (cache/get-reviews))}))
     
-(defpage "/reviews-per-month" {:keys [excludedProjects includedProjects sinceDate minComments]}
+(defpage "/reviews" params
+  (json/encode 
+    (filtered-reviews params)))
+
+(defpage "/reviews-per-month" params
   (json/encode 
     (group-reviews-by-month 
-      (filter (every-pred (partial since-filter sinceDate)
-                          (partial project-filter not-in? excludedProjects)
-                          (partial project-filter in? includedProjects)
-                          (partial comment-count-filter minComments))
-              (cache/get-reviews)))))
+      (filtered-reviews params))))
+
+(defpage "/comments" params
+  (json/encode 
+    (comments-for-reviews 
+      (filtered-reviews params))))
+
+(defpage "/userstats" params
+  (json/encode 
+    (user-stats 
+      (filtered-reviews params))))

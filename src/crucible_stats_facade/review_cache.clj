@@ -1,7 +1,8 @@
 (ns crucible-stats-facade.review_cache
   (:require [crucible-stats-facade.crucible-client :as client])
   (:use [clj-time.local :only [local-now]]
-        [crucible-stats-facade.utils]))
+        [crucible-stats-facade.utils]
+        [crucible-stats-facade.domain_commons]))
 
 (def cached-data (atom {:reviews-updated nil :reviews nil
                         :comments-updated nil :comments nil}))
@@ -20,29 +21,20 @@
     (:reviews (update-cached-reviews))))
 
 (defn get-review-ids []
-  (map #(get-in % [:reviewData :permaId :id]) (get-reviews)))
+  (map id (get-reviews)))
 
-(defn user-of-comment [comment-data]
-  (if (:generalCommentData comment-data) 
-    (get-in comment-data [:generalCommentData :user :userName])
-    (get-in comment-data [:versionedLineCommentData :user :userName])))
-
-(defn count-comments-by-users [comments]
-  (map (fn [[name count]] {(keyword name) count}) 
-       (frequencies (map user-of-comment comments))))
-
-(defn comment-stats-for-review [review-id]
+(defn comments-for-review [review-id]
   (let [comments (client/comments review-id)]
     {:review-id review-id
      :comment-count (count comments)
-     :comments (count-comments-by-users comments)}))
+     :comments comments}))
 
-(defn comment-stats-for-all [review-ids]
-  (map comment-stats-for-review review-ids))
+(defn comments-for-all [review-ids]
+  (map comments-for-review review-ids))
 
 (defn update-cached-comments [review-ids]
   (swap! cached-data assoc :comments-updated (now) 
-         :comments (comment-stats-for-all review-ids)))
+         :comments (comments-for-all review-ids)))
 
 (defn get-comments []
   (if-let [comments (:comments @cached-data)]

@@ -18,8 +18,9 @@
               {:versionedLineCommentData {:message (str review-id " comment") :user {:userName "purtti"}}}]})
 
 
-(defn xml-comments []
-  "<comments>
+(defn xml-comments [review-id]
+  "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
+   <comments>
     <generalCommentData>
         <message>I thought you said you were going to remove this line</message>
         <user>
@@ -32,17 +33,23 @@
             <userName>purtti</userName>
         </user>
     </versionedLineCommentData>
+    <versionedLineCommentData>
+        <message>some other message</message>
+        <user>
+            <userName>pertti</userName>
+        </user>
+    </versionedLineCommentData>
   </comments>")
 
 (defpage "/rest-service/reviews-v1/:id/comments" {:keys [id]}
-         (json/encode (mock-comments id)))
+  (xml-comments id))
 
 (defn mock-reviews []
-  {:reviews [{:reviewData {:author {:userName "pertti1"} :createDate "2012-01-15T15:59:49.855+1000" :permaId {:id "CR-1"} :projectKey "CR"}}
-             {:reviewData {:author {:userName "pertti2"} :createDate "2012-01-16T15:59:49.855+1000" :permaId {:id "CR-2"} :projectKey "CR"}}
-             {:reviewData {:author {:userName "pertti3"} :createDate "2012-02-15T15:59:49.855+1000" :permaId {:id "CR-3"} :projectKey "CR"}}
-             {:reviewData {:author {:userName "pertti4"} :createDate "2012-02-16T15:59:49.855+1000" :permaId {:id "PUB-1"} :projectKey "PUB"}}
-             {:reviewData {:author {:userName "pertti5"} :createDate "2012-03-15T15:59:49.855+1000" :permaId {:id "PUB-2"} :projectKey "PUB"}}]})
+  {:reviews [{:reviewData {:author {:userName "pertti"} :createDate "2012-01-15T15:59:49.855+1000" :permaId {:id "CR-1"} :projectKey "CR"}}
+             {:reviewData {:author {:userName "pertti"} :createDate "2012-01-16T15:59:49.855+1000" :permaId {:id "CR-2"} :projectKey "CR"}}
+             {:reviewData {:author {:userName "purtti"} :createDate "2012-02-15T15:59:49.855+1000" :permaId {:id "CR-3"} :projectKey "CR"}}
+             {:reviewData {:author {:userName "purtti"} :createDate "2012-02-16T15:59:49.855+1000" :permaId {:id "PUB-1"} :projectKey "PUB"}}
+             {:reviewData {:author {:userName "pertti"} :createDate "2012-03-15T15:59:49.855+1000" :permaId {:id "PUB-2"} :projectKey "PUB"}}]})
 
 (defpage "/rest-service/reviews-v1" []
          (json/encode (mock-reviews)))
