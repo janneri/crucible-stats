@@ -13,10 +13,6 @@
          (json/encode {:projects [{:projectData {:key "CR"}}
                                   {:projectData {:key "Public"}}]} {:pretty true}))
 
-(defn mock-comments [review-id]
-  {:comments [{:generalCommentData {:message (str review-id " generalcomment") :user {:userName "pertti"}}}
-              {:versionedLineCommentData {:message (str review-id " comment") :user {:userName "purtti"}}}]})
-
 
 (defn xml-comments [review-id]
   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
