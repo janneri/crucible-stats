@@ -2,28 +2,24 @@
   (:require [cheshire.core :as json]
             [crucible-stats-facade.review_cache :as cache])
   (:use [noir.core :only [defpage]]
-        [crucible-stats-facade.utils]
-        [crucible-stats-facade.domain_commons]))
+        [crucible-stats-facade.utils]))
 
 (defn comments-for-review-ids [review-ids]
   (filter #(in? review-ids (:review-id %)) (cache/get-comments)))
 
 (defn comments-for-reviews [review-vector]
-  (comments-for-review-ids (map id review-vector)))
-
-(defn create-dates [review-vector]
-  (map create-date review-vector))
+  (comments-for-review-ids (map :id review-vector)))
 
 (defn group-reviews-by-month [review-vector]
   (for [[[year month] dates] (group-by (juxt :year :month)
-                                       (create-dates review-vector))]
+                                       (map :createDate review-vector))]
     {:year year
      :month month
      :count (count dates)}))
 
 (defn group-reviews-by-author [review-vector]
   (for [[author count] (->> review-vector
-                         (map author)
+                         (map :author)
                          frequencies)]
     {:author author, :count count}))
 
@@ -43,28 +39,28 @@
 
 (defn project-filter [predicate-fn projects-str review]
   (if-let [project-keys (null-safe-split projects-str #"," false)]
-    (predicate-fn project-keys (project-key review))
+    (predicate-fn project-keys (:projectKey review))
     true))
 
 (defn created-since-filter [since-str review]
   (if since-str
-    (> 0 (compare since-str (to-str (create-date review))))
+    (> 0 (compare since-str (to-str (:createDate review))))
     true))
 
 (defn author-filter [authors-str review]
   (if-let [authors (null-safe-split authors-str #"," false)]
-    (in? authors (author review))
+    (in? authors (:author review))
     true))
 
 (defn comment-count-filter [comment-count-str review]
   (if comment-count-str
-    (>= (:comment-count (first (comments-for-review-ids [(id review)]))) 
+    (>= (:comment-count (first (comments-for-review-ids [(:id review)]))) 
         (read-string comment-count-str))
     true))
 
 (defn commented-filter [usernames-str review]
   (if-let [usernames (null-safe-split usernames-str #"," false)]
-    (in? usernames (author review))
+    (in? usernames (:author review))
     true))
 
 (defn filtered-reviews [params]

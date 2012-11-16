@@ -21,7 +21,7 @@
     (:reviews (update-cached-reviews))))
 
 (defn get-review-ids []
-  (map id (get-reviews)))
+  (map :id (get-reviews)))
 
 (defn comments-for-review [review-id]
   (let [comments (client/comments review-id)]

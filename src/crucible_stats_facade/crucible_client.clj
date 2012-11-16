@@ -64,4 +64,9 @@
 (defn reviews []
   (let [json-data (json/parse-string (:body (client/get (reviews-uri))) true)
         reviews (:reviews json-data)]
-    reviews))
+    (for [review (map :reviewData reviews)] 
+      {:id ((comp :id :permaId) review)
+       :projectKey (:projectKey review)
+       :author ((comp :userName :author) review)
+       :createDate (:createDate review)})))
+
