@@ -1,8 +1,7 @@
 (ns crucible-stats-facade.review_cache
   (:require [crucible-stats-facade.crucible-client :as client])
   (:use [clj-time.local :only [local-now]]
-        [crucible-stats-facade.utils]
-        [crucible-stats-facade.domain_commons]))
+        [crucible-stats-facade.utils]))
 
 (def cached-data (atom {:reviews-updated nil :reviews nil
                         :comments-updated nil :comments nil}))

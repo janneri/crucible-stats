@@ -12,7 +12,7 @@
 
 (defn group-reviews-by-month [review-vector]
   (for [[[year month] dates] (group-by (juxt :year :month)
-                                       (map :createDate review-vector))]
+                                       (map (comp to-date :createDate) review-vector))]
     {:year year
      :month month
      :count (count dates)}))
@@ -23,7 +23,15 @@
                          frequencies)]
     {:author author, :count count}))
 
-; todo not used  
+(defn avg-comment-length-by-users [review-vector]
+  (let [comments (mapcat :comments (comments-for-reviews review-vector))
+        users (set (map :user comments))
+        comments-of-usr (fn [user clist] (filter #(= user (:user %)) clist))]
+    (map (fn [user] {:username user
+                     :avg (/ (apply + (map :msg-word-count (comments-of-usr user comments)))
+                             (count (comments-of-usr user comments)))}) 
+      users)))
+
 (defn count-comments-by-users [review-vector]
   (let [usernames (map :user (mapcat :comments (comments-for-reviews review-vector)))]
     (map (fn [[name count]] {:username name :commentcount count}) 
@@ -32,10 +40,15 @@
 (defn review-count-of-author [count-map username]
   (:count (find-first #(= username (:author %)) count-map)))
 
+(defn avg-msg-length-of-author [avg-length-map username]
+  (:avg (find-first #(= username (:username %)) avg-length-map)))
+
 (defn user-stats [review-vector]
-  (let [author-stats (group-reviews-by-author review-vector)]
+  (let [author-stats (group-reviews-by-author review-vector)
+        avg-stats (avg-comment-length-by-users review-vector)]
     (for [stat (count-comments-by-users review-vector)] 
-      (assoc stat :authoredreviewcount (review-count-of-author author-stats (:username stat))))))
+      (assoc stat :authoredreviewcount (review-count-of-author author-stats (:username stat))
+                  :avgmessagelength (avg-msg-length-of-author avg-stats (:username stat))))))
 
 (defn project-filter [predicate-fn projects-str review]
   (if-let [project-keys (null-safe-split projects-str #"," false)]
@@ -44,7 +57,7 @@
 
 (defn created-since-filter [since-str review]
   (if since-str
-    (> 0 (compare since-str (to-str (:createDate review))))
+    (> 0 (compare since-str (to-str (to-date (:createDate review)))))
     true))
 
 (defn author-filter [authors-str review]
