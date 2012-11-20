@@ -46,20 +46,31 @@
 (defn word-count [msg]
   (count (clojure.string/split msg #" ")))
 
+(defn username [comment]
+  (if-let [username (xml1-> comment :user :userName text)]
+    username
+    "unknown"))
+
+(defn comment-xml-to-comment-map [comment-xml]
+  (let [message (xml1-> comment-xml :message text)
+        user (username comment-xml)]
+    {:user user :msg-word-count (word-count message)}))
+    
+(defn parse-comments [root-comment]
+  (let [replies (xml-> root-comment :replies :generalCommentData)
+        comment (comment-xml-to-comment-map root-comment)]
+    (if (empty? replies)
+      (list comment)
+      (conj (mapcat parse-comments replies) comment))))
+
+(defn comments-xml [review-id]
+  (zip/xml-zip (xml/parse (comments-uri review-id))))
+        
 (defn comments [review-id]
   (let [xml (zip/xml-zip (xml/parse (comments-uri review-id)))
-        generalmessages (xml-> xml :generalCommentData :message text)
-        generalusers (xml-> xml :generalCommentData :user text)
-        linemessages (xml-> xml :versionedLineCommentData :message text)
-        lineusers (xml-> xml :versionedLineCommentData :user text)
-        messages (seq (concat generalmessages linemessages))
-        users (seq (concat generalusers lineusers))]
-    (for [i (range 0 (count messages))] 
-      {:user (nth users i) :msg-word-count (word-count (nth messages i))})))
-    ; XXX ugly
-    ;(zipmap users messages))) ; will apply to linemessages only ???
-    ;(merge (zipmap generalusers generalmessages) (zipmap lineusers linemessages))))
-    ;(for [[user msg] (zipmap users messages)] {:user user :msg msg})))
+        general (mapcat parse-comments (xml-> xml :generalCommentData))
+        line (mapcat parse-comments (xml-> xml :versionedLineCommentData))]
+    (concat general line)))
 
 (defn reviews []
   (let [json-data (json/parse-string (:body (client/get (reviews-uri))) true)

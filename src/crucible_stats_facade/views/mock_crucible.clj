@@ -18,19 +18,37 @@
   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
    <comments>
     <generalCommentData>
+        <deleted>false</deleted>
+        <message>general comment1</message>
+				<replies/>
+        <user>
+            <userName>pertti</userName>
+        </user>
+    </generalCommentData>
+    <generalCommentData>
+        <deleted>false</deleted>
         <message>I thought you said you were going to remove this line</message>
+				<replies>
+					<generalCommentData>
+						<deleted>false</deleted>
+						<message>foo</message>		
+						<replies/>
+					</generalCommentData>
+				</replies>
         <user>
             <userName>pertti</userName>
         </user>
     </generalCommentData>
     <versionedLineCommentData>
+        <deleted>false</deleted>
         <message>some message</message>
         <user>
             <userName>purtti</userName>
         </user>
     </versionedLineCommentData>
     <versionedLineCommentData>
-        <message>some other message</message>
+        <deleted>false</deleted>
+        <message>some other message</message>        
         <user>
             <userName>pertti</userName>
         </user>
