@@ -1,4 +1,4 @@
-(ns crucible-stats-facade.crucible-client
+(ns crucible_stats_facade.crucible-client
   (:use [clojure.data.zip.xml :only (attr text xml1-> xml->)])
   (:require [cheshire.core :as json]
             [clojure.xml :as xml]
@@ -10,7 +10,7 @@
 (defn token-param []
   (if-let [tokenStr (:tokenStr @token)]
     (str "FEAUTH=" tokenStr)
-    (throw (IllegalStateException. "login required"))))
+    (throw (IllegalStateException. "login required (did you update the cache)"))))
 
 (def valid-review-states "Draft,Approval,Review,Summarize,Closed")
 

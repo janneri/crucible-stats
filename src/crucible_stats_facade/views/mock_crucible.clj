@@ -42,6 +42,16 @@
     <versionedLineCommentData>
         <deleted>false</deleted>
         <message>some message</message>
+				<replies>
+					<generalCommentData>
+						<deleted>false</deleted>
+						<message>foo</message>		
+						<replies/>
+            <user>
+              <userName>purtti</userName>
+            </user>
+					</generalCommentData>
+				</replies>
         <user>
             <userName>purtti</userName>
         </user>

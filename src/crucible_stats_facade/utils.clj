@@ -1,4 +1,4 @@
-(ns crucible-stats-facade.utils)
+(ns crucible_stats_facade.utils)
 
 (defn in? [seq elm]
   (some #(= elm %) seq))

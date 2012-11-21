@@ -1,8 +1,8 @@
-(ns crucible-stats-facade.views.stats_facade
+(ns crucible_stats_facade.views.stats_facade
   (:require [cheshire.core :as json]
-            [crucible-stats-facade.review_cache :as cache])
+            [crucible_stats_facade.review_cache :as cache])
   (:use [noir.core :only [defpage]]
-        [crucible-stats-facade.utils]))
+        [crucible_stats_facade.utils]))
 
 (defn comments-for-review-ids [review-ids]
   (filter #(in? review-ids (:review-id %)) (cache/get-comments)))
@@ -87,10 +87,14 @@
 	      (partial comment-count-filter minComments))
 	    (cache/get-reviews))))
 
-(defpage "/update-cache" {:keys [username password]}
+(defpage [:post "/update-cache"] {:keys [username password]}
+  (Thread/sleep 5000)
   (cache/update-cache username password)
   (json/encode {:reviewsloaded (count (cache/get-reviews))}))
-    
+
+(defpage "/cache-status" params
+  (json/encode (cache/cache-status))) 
+
 (defpage "/reviews" params
   (json/encode 
     (filtered-reviews params)))
@@ -109,3 +113,4 @@
   (json/encode 
     (user-stats 
       (filtered-reviews params))))
+

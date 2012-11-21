@@ -2,6 +2,8 @@
 <html>
 <head>
 	<title>Demo UI for Crucible Stats Facade</title>
+	<link rel="stylesheet" href="css/reset.css" type="text/css" />
+	<link rel="stylesheet" href="css/style.css" type="text/css" />
 	<link rel="stylesheet" href="css/tablesorter_blue.css" type="text/css" media="print, projection, screen" />
 	<script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
 	<script type="text/javascript" src="js/transparency.min.js"></script>
@@ -10,96 +12,149 @@
 
 	<script type="text/javascript">
 	$(function() {
+		setupLoaderAnimation();
+		reloadData();
 
+		$("#update-cache").click(function (e) {
+			e.preventDefault();
+			updateCache();
+		});
+        
+	});
+
+	function setupLoaderAnimation() {
+		$('#loader').hide();
+		jQuery.ajaxSetup({
+			beforeSend: function() {
+				$('#cache-update-started').text(new Date());
+				$('#loader').show();
+			},
+			complete: function(){
+				$('#loader').hide();
+			},
+			success: function() {}
+		});
+	}
+
+	function reloadData() {
 		loadAndBind("/reviews-per-month", '#reviews-per-month');
 		loadAndBind("/reviews", '#reviews');
 		loadAndBind("/userstats", '#userstats');
 
-	});
+		$.getJSON("/cache-status", function(json) {
+			$(".cache-status").render(json);
+		});
+	}
 
 	function loadAndBind(url, container) {
 		$.getJSON(url, function(json) {
 			$(container + ' tbody').render(json);
 			$(container) 
 			.tablesorter({widthFixed: true, widgets: ['zebra']});
-          //.tablesorterPager({container: $("#reviewspager")});
-          
+          //.tablesorterPager({container: $("#reviewspager")});          
       });
-	}  
+	} 
+
+	function updateCache() {
+		var data = $("#cacheform").serialize();
+		$.post("/update-cache", data, function(json) {
+			reloadData();	  	
+		});
+		return false;
+	}
+
 	</script>
 </head>
 <body>
 
-	<div class="wrapper">
-		<p>Monthly stats:</p>
-		<table id="reviews-per-month" class="tablesorter">
-			<thead>
-				<tr>
-					<th>Year</th><th>Month</th><th>Review Count</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr class="monthlycount">
-					<td class="year"></td>
-					<td class="month"></td>
-					<td class="count"></td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
-
-	<div class="wrapper">
-		<p>User stats:</p>
-		<table id="userstats" class="tablesorter">
-			<thead>
-				<tr>
-					<th>Username</th><th>Authored Review Count</th><th>Comment Count</th><th>Avg Message Length</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr class="stat">
-					<td class="username"></td>
-					<td class="authoredreviewcount"></td>
-					<td class="commentcount"></td>
-					<td class="avgmessagelength"></td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
-
-	<div class="wrapper">
-		<p>Reviews:</p>
-		<table id="reviews" class="tablesorter">
-			<thead>
-				<tr>
-					<th>Id</th><th>Project</th><th>Author</th><th>Created</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr class="review">
-					<td class="id"></td>
-					<td class="projectKey"></td>
-					<td class="author"></td>
-					<td class="createDate"></td>
-				</tr>
-			</tbody>
-		</table>
-		<div id="reviewspager" class="pager">
-			<form>
-				<img src="img/first.png" class="first">
-				<img src="img/prev.png" class="prev">
-				<input type="text" class="pagedisplay">
-				<img src="img/next.png" class="next">
-				<img src="img/last.png" class="last">
-				<select class="pagesize">
-					<option selected="selected" value="10">10</option>
-					<option value="20">20</option>
-					<option value="30">30</option>
-					<option value="40">40</option>
-				</select>
-			</form>
+	<div class="wrapper cache-status">
+		<p>Cache status:</p>
+		<div>Reviews updated: <span class="reviews-updated"></span>, 
+			 comments updated: <span class="comments-updated">.</span>
+			 <span id="loader">
+			 	<img alt="Loading, please wait.." src="/img/ajax-loader.gif" />
+			 	Cache update started at: <span id="cache-update-started"></span>
+			 <span>
+	    </div>
+		<span>You can manually update the cache. Note that for ~100 reviews it might take several minutes.</span>
+		<form id="cacheform">
+			<label for="username">username</label>
+			<input id="username" name="username">
+			<label for="password">password</label>
+			<input id="password" name="password">
+			<button id="update-cache">Update cache</button>
+		</form>
 		</div>
-	</div>
+		<div class="wrapper">
+			<p>Monthly stats:</p>
+			<table id="reviews-per-month" class="tablesorter">
+				<thead>
+					<tr>
+						<th>Year</th><th>Month</th><th>Review Count</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr class="monthlycount">
+						<td class="year"></td>
+						<td class="month"></td>
+						<td class="count"></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
 
-</body>
-</html>
+		<div class="wrapper">
+			<p>User stats:</p>
+			<table id="userstats" class="tablesorter">
+				<thead>
+					<tr>
+						<th>Username</th><th>Authored Review Count</th><th>Comment Count</th><th>Avg Message Length</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr class="stat">
+						<td class="username"></td>
+						<td class="authoredreviewcount"></td>
+						<td class="commentcount"></td>
+						<td class="avgmessagelength"></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="wrapper">
+			<p>Reviews:</p>
+			<table id="reviews" class="tablesorter">
+				<thead>
+					<tr>
+						<th>Id</th><th>Project</th><th>Author</th><th>Created</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr class="review">
+						<td class="id"></td>
+						<td class="projectKey"></td>
+						<td class="author"></td>
+						<td class="createDate"></td>
+					</tr>
+				</tbody>
+			</table>
+			<div id="reviewspager" class="pager">
+				<form>
+					<img src="img/first.png" class="first">
+					<img src="img/prev.png" class="prev">
+					<input type="text" class="pagedisplay">
+					<img src="img/next.png" class="next">
+					<img src="img/last.png" class="last">
+					<select class="pagesize">
+						<option selected="selected" value="10">10</option>
+						<option value="20">20</option>
+						<option value="30">30</option>
+						<option value="40">40</option>
+					</select>
+				</form>
+			</div>
+		</div>
+
+	</body>
+	</html>
