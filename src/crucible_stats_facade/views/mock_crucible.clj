@@ -17,6 +17,11 @@
 (defn xml-comments [review-id]
   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
    <comments>
+   <generalCommentData>
+				<deleted>true</deleted>
+        <message>foo</message>		
+		    <replies/>
+		</generalCommentData>
     <generalCommentData>
         <deleted>false</deleted>
         <message>general comment1</message>

@@ -58,14 +58,14 @@
     
 (defn parse-comments [root-comment]
   (let [replies (xml-> root-comment :replies :generalCommentData)
+        valid (= "false" (xml1-> root-comment :deleted text))
         comment (comment-xml-to-comment-map root-comment)]
-    (if (empty? replies)
-      (list comment)
-      (conj (mapcat parse-comments replies) comment))))
+    (if valid 
+      (if (empty? replies)
+        (list comment)
+        (conj (mapcat parse-comments replies) comment))
+      '())))
 
-(defn comments-xml [review-id]
-  (zip/xml-zip (xml/parse (comments-uri review-id))))
-        
 (defn comments [review-id]
   (let [xml (zip/xml-zip (xml/parse (comments-uri review-id)))
         general (mapcat parse-comments (xml-> xml :generalCommentData))
