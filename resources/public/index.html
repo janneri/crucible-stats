@@ -16,6 +16,7 @@
 		reloadData();
 
 		$("#update-cache").click(function (e) {
+			$('#last-update-started').text(new Date());
 			e.preventDefault();
 			updateCache();
 		});
@@ -25,8 +26,7 @@
 	function setupLoaderAnimation() {
 		$('#loader').hide();
 		jQuery.ajaxSetup({
-			beforeSend: function() {
-				$('#cache-update-started').text(new Date());
+			beforeSend: function() {				
 				$('#loader').show();
 			},
 			complete: function(){
@@ -70,13 +70,13 @@
 	<div class="wrapper cache-status">
 		<p>Cache status:</p>
 		<div>Reviews updated: <span class="reviews-updated"></span>, 
-			 comments updated: <span class="comments-updated">.</span>
+			 comments updated: <span class="comments-updated"></span>,
+			 last update started at: <span id="last-update-started"></span>
 			 <span id="loader">
 			 	<img alt="Loading, please wait.." src="/img/ajax-loader.gif" />
-			 	Cache update started at: <span id="cache-update-started"></span>
 			 <span>
 	    </div>
-		<span>You can manually update the cache. Note that for ~100 reviews it might take several minutes.</span>
+		<span>Note that for ~100 reviews it might take several minutes to update the cache.</span>
 		<form id="cacheform">
 			<label for="username">username</label>
 			<input id="username" name="username">

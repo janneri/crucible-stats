@@ -88,7 +88,6 @@
 	    (cache/get-reviews))))
 
 (defpage [:post "/update-cache"] {:keys [username password]}
-  (Thread/sleep 5000)
   (cache/update-cache username password)
   (json/encode {:reviewsloaded (count (cache/get-reviews))}))
 

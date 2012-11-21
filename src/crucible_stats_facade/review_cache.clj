@@ -9,7 +9,8 @@
 (defn cache-status []
   {:reviews-updated (:reviews-updated @cached-data)
    :review-count (count (:reviews @cached-data))
-   :comments-updated (:comments-updated @cached-data)})
+   :comments-updated (:comments-updated @cached-data)
+   :last-update-started (:last-update-started @cached-data)})
 
 (defn update-cached-reviews []
   (swap! cached-data assoc :reviews-updated (now) :reviews (client/reviews)))
@@ -41,7 +42,9 @@
     (:comments (update-cached-comments (get-review-ids)))))
 
 (defn update-cache [username password]
-  (println "updating cache started at" (local-now))  
+  (println "updating cache started at" (local-now))
+  (swap! cached-data assoc :last-update-started (now))
+  (Thread/sleep 5000) ;todo remove  
   (client/login-and-get-token username password)
   (update-cached-reviews)
   (update-cached-comments (get-review-ids))
