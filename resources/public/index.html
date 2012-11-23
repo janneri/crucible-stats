@@ -41,7 +41,7 @@
         setDataFromUrlToTable("/reviews-per-month", monthlystatToArray, "#reviews-per-month", monthlystatHeaders);
 
         function reviewToArray(json) { 
-        	return [json.id, json.author, json.createDate]; 
+        	return [json.id, json.author, moment(json["createDate"]).format("DD.MM.YYYY HH:mm")]; 
         }
         var reviewListHeaders = ["Id", "Author", "Created"];
         setDataFromUrlToTable("/reviews", reviewToArray, "#reviews", reviewListHeaders);    	
