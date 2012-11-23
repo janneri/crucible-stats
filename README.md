@@ -14,7 +14,7 @@ This tool has the following features:
 
 ## Demo UI
 
-![preview](http://github.com/janneri/crucible-stats/raw/master/crucible-stats-ui.png)
+![preview](http://github.com/janneri/crucible-stats/raw/master/stats_facade_ui.png)
 
 ## JSON API
 
