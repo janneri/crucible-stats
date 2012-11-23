@@ -14,7 +14,7 @@
 
 (def valid-review-states "Draft,Approval,Review,Summarize,Closed")
 
-(def base-uri "http://localhost:8090/rest-service/")
+(def base-uri "http://localhost:8080/rest-service/")
 (defn login-uri [username password] (str base-uri "auth-v1/login?userName=" username "&password=" password))
 (defn projects-uri [] (str base-uri "projects-v1?" (token-param)))
 (defn reviews-uri [] (str base-uri "reviews-v1?" (token-param) "&state=" valid-review-states))
