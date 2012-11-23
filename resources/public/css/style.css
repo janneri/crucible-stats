@@ -1,3 +1,55 @@
-.busy {
-    cursor: wait !important;
+#statsfacade {
+	font: 80%/1.45em "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
+	margin: 0;
+	padding: 0;
+	color: #333;
+	background-color: #fff;
+}
+
+
+#statsfacade .wrapper {
+	width: 800px;
+	margin: 30px auto;
+	padding: 0;
+}
+
+#statsfacade .spacer {
+	height: 20px;
+	clear: both;
+}
+
+#statsfacade .clear {
+	clear: both;
+}
+
+#statsfacade h1 {
+	margin-top: 2em;
+	margin-bottom: 0.5em;
+	font-size: 1.3em;
+	font-weight: normal;
+	line-height: 1.6em;
+	color: #4E6CA3;
+	border-bottom: 1px solid #B0BED9;
+	clear: both;
+}
+
+#statsfacade .warn {
+	color: red;
+}
+
+#statsfacade a {
+	color: #0063DC;
+	text-decoration: none;
+}
+
+#statsfacadea:hover {
+	text-decoration: underline;
+}
+
+.css_right {
+	float: right;
+}
+
+.css_left {
+	float: left;
 }

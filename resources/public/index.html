@@ -1,160 +1,173 @@
 <?xml version="1.0"?>
 <html>
 <head>
-	<title>Demo UI for Crucible Stats Facade</title>
-	<link rel="stylesheet" href="css/reset.css" type="text/css" />
-	<link rel="stylesheet" href="css/style.css" type="text/css" />
-	<link rel="stylesheet" href="css/tablesorter_blue.css" type="text/css" media="print, projection, screen" />
-	<script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
-	<script type="text/javascript" src="js/transparency.min.js"></script>
-	<script type="text/javascript" src="js/jquery.tablesorter.js"></script>
-	<script type="text/javascript" src="js/jquery.tablesorter.pager.js"></script>
+    <title>Demo UI for the Crucible Stats Facade</title>
+    <link rel="stylesheet" href="css/reset.css" type="text/css" />
+    <link rel="stylesheet" href="css/style.css" type="text/css" />
+    <link rel="stylesheet" href="css/datatable.css" type="text/css" />
+    
+    <script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
+    <script type="text/javascript" src="js/transparency.min.js"></script>
+    <script type="text/javascript" src="js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="js/moment.min.js"></script>
+   
+    <script type="text/javascript">   
+    $(function() {
+        setupLoaderAnimation();
+        loadCacheStatus();
 
-	<script type="text/javascript">
-	$(function() {
-		setupLoaderAnimation();
-		reloadData();
+        $("#update-cache").click(function (e) {
+            $('#last-update-started').text(moment().format("DD.MM.YYYY HH:mm"));
+            e.preventDefault();
+            updateReviewCache();
+        });
 
-		$("#update-cache").click(function (e) {
-			$('#last-update-started').text(new Date());
-			e.preventDefault();
-			updateCache();
-		});
-        
-	});
+        loadReviewData();
+        setupFilterChangeHandlers();
 
-	function setupLoaderAnimation() {
-		$('#loader').hide();
-		jQuery.ajaxSetup({
-			beforeSend: function() {				
-				$('#loader').show();
-			},
-			complete: function(){
-				$('#loader').hide();
-			},
-			success: function() {}
-		});
-	}
+    });
 
-	function reloadData() {
-		loadAndBind("/reviews-per-month", '#reviews-per-month');
-		loadAndBind("/reviews", '#reviews');
-		loadAndBind("/userstats", '#userstats');
+    function loadReviewData() {
+        function userstatToArray(json) { 
+        	return [json.username, json.authoredreviewcount, json.commentcount, json.avgmessagelength]; 
+        }
+        var userstatHeaders = ["Username", "Authored Reviews", "Total Comments", "Avg Message Length"];
+        setDataFromUrlToTable("/userstats", userstatToArray, "#userstats", userstatHeaders);
 
-		$.getJSON("/cache-status", function(json) {
-			$(".cache-status").render(json);
-		});
-	}
+        function monthlystatToArray(json) { 
+        	return [json.year, json.month, json.count]; 
+        }
+        var monthlystatHeaders = ["Year", "Month", "Review Count"];
+        setDataFromUrlToTable("/reviews-per-month", monthlystatToArray, "#reviews-per-month", monthlystatHeaders);
 
-	function loadAndBind(url, container) {
-		$.getJSON(url, function(json) {
-			$(container + ' tbody').render(json);
-			$(container) 
-			.tablesorter({widthFixed: true, widgets: ['zebra']});
-          //.tablesorterPager({container: $("#reviewspager")});          
-      });
-	} 
+        function reviewToArray(json) { 
+        	return [json.id, json.author, json.createDate]; 
+        }
+        var reviewListHeaders = ["Id", "Author", "Created"];
+        setDataFromUrlToTable("/reviews", reviewToArray, "#reviews", reviewListHeaders);    	
+    }
 
-	function updateCache() {
-		var data = $("#cacheform").serialize();
-		$.post("/update-cache", data, function(json) {
-			reloadData();	  	
-		});
-		return false;
-	}
+    function setupFilterChangeHandlers() {
+        filterNames.forEach(function(filterName) {
+            $('#'+filterName).change(function() {
+                destroyDatatables();
+                loadReviewData();
+            });
+        });
+    }
 
-	</script>
+    function setupLoaderAnimation() {
+        $('#loader').hide();
+        jQuery.ajaxSetup({
+            beforeSend: function() {                
+                $('#loader').show();
+            },
+            complete: function(){
+                $('#loader').hide();
+            },
+            success: function() {}
+        });
+    }
+
+    function loadCacheStatus() {
+        $.getJSON("/cache-status", function(json) {
+            
+            json["reviews-updated"] = moment(json["reviews-updated"]).format("DD.MM.YYYY HH:mm");
+            json["comments-updated"] = moment(json["comments-updated"]).format("DD.MM.YYYY HH:mm");
+            json["last-update-started"] = moment(json["last-update-started"]).format("DD.MM.YYYY HH:mm");
+
+            $(".cache-status").render(json);
+        });
+    }
+    
+    function destroyDatatables() {
+        $('#reviews-per-month').dataTable().fnDestroy();
+        $('#userstats').dataTable().fnDestroy();
+        $('#reviews').dataTable().fnDestroy();
+    }
+
+    function updateReviewCache() {
+        var data = $("#cacheform").serialize();
+        $.post("/update-cache", data, function(json) {
+            loadCacheStatus();
+            destroyDatatables();
+	        loadReviewData();          
+        });
+        return false;
+    }
+
+    var filterNames = ["excludedProjects", "includedProjects", "authors", "sinceDate", "minComments"];
+    function getReviewFilters() {
+        filters = {};
+        filterNames.forEach(function(filterName) {
+            val = $('#'+filterName).val();
+            if ( val > 0 || val != "" ) filters[filterName] = val;
+        });
+        return filters;
+    }
+
+
+    function setDataFromUrlToTable(url, mapper, tableid, headers) {
+        $.getJSON(url, getReviewFilters(), function(json) {
+            var data = json.map(mapper);
+            var cols = headers.map(function(header) { return {"sTitle": header}; });
+
+            $(tableid).dataTable({
+                "aaData": data,
+                "aoColumns": cols
+            });
+        });
+    }
+
+    </script>
 </head>
-<body>
+<body id="statsfacade">
 
-	<div class="wrapper cache-status">
-		<p>Cache status:</p>
-		<div>Reviews updated: <span class="reviews-updated"></span>, 
-			 comments updated: <span class="comments-updated"></span>,
-			 last update started at: <span id="last-update-started"></span>
-			 <span id="loader">
-			 	<img alt="Loading, please wait.." src="/img/ajax-loader.gif" />
-			 <span>
-	    </div>
-		<span>Note that for ~100 reviews it might take several minutes to update the cache.</span>
-		<form id="cacheform">
-			<label for="username">username</label>
-			<input id="username" name="username">
-			<label for="password">password</label>
-			<input id="password" name="password">
-			<button id="update-cache">Update cache</button>
-		</form>
-		</div>
-		<div class="wrapper">
-			<p>Monthly stats:</p>
-			<table id="reviews-per-month" class="tablesorter">
-				<thead>
-					<tr>
-						<th>Year</th><th>Month</th><th>Review Count</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr class="monthlycount">
-						<td class="year"></td>
-						<td class="month"></td>
-						<td class="count"></td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
+    <div class="wrapper cache-status">
+        <h1>Cache status:</h1>
+        <div>Reviews updated: <span class="reviews-updated"></span>, 
+             comments updated: <span class="comments-updated"></span>,
+             last update started at: <span id="last-update-started"></span>
+             <span id="loader">
+                 <img alt="Loading, please wait.." src="/img/ajax-loader.gif" />
+             <span>
+        </div>
+        
+        <form id="cacheform">
+            <label for="username">username</label>
+            <input id="username" name="username">
+            <label for="password">password</label>
+            <input id="password" name="password">
+            <button id="update-cache">Update cache</button>
+            <span class="warn">Note: Slow!</span>
+        </form>
+    </div>
 
-		<div class="wrapper">
-			<p>User stats:</p>
-			<table id="userstats" class="tablesorter">
-				<thead>
-					<tr>
-						<th>Username</th><th>Authored Review Count</th><th>Comment Count</th><th>Avg Message Length</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr class="stat">
-						<td class="username"></td>
-						<td class="authoredreviewcount"></td>
-						<td class="commentcount"></td>
-						<td class="avgmessagelength"></td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
+    <div class="wrapper">
+        <p>Filter reviews/stats below:</p>
+        <div>
+            <span>since (yyyy-mm-dd): </span> <input id="sinceDate" value="2012-01-01" />
+            <span>min comments: </span> <input id="minComments" value="0" />
+            <span>authors: </span> <input id="authors" value="" />        
+        </div>
+        <span>excluded projects: </span> <input id="excludedProjects" value="" />
+        <span>included projects: </span> <input id="includedProjects" value="" />        
+    </div>
 
-		<div class="wrapper">
-			<p>Reviews:</p>
-			<table id="reviews" class="tablesorter">
-				<thead>
-					<tr>
-						<th>Id</th><th>Project</th><th>Author</th><th>Created</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr class="review">
-						<td class="id"></td>
-						<td class="projectKey"></td>
-						<td class="author"></td>
-						<td class="createDate"></td>
-					</tr>
-				</tbody>
-			</table>
-			<div id="reviewspager" class="pager">
-				<form>
-					<img src="img/first.png" class="first">
-					<img src="img/prev.png" class="prev">
-					<input type="text" class="pagedisplay">
-					<img src="img/next.png" class="next">
-					<img src="img/last.png" class="last">
-					<select class="pagesize">
-						<option selected="selected" value="10">10</option>
-						<option value="20">20</option>
-						<option value="30">30</option>
-						<option value="40">40</option>
-					</select>
-				</form>
-			</div>
-		</div>
+    <div class="wrapper">
+        <h1>Monthly stats:</h1>
+        <table cellpadding="0" cellspacing="0" border="0" class="display" id="reviews-per-month"></table>
+    </div>
 
-	</body>
-	</html>
+    <div class="wrapper">
+        <h1>User stats:</h1>
+        <table cellpadding="0" cellspacing="0" border="0" class="display" id="userstats"></table>
+    </div>
+        
+    <div class="wrapper">
+        <h1>Reviews:</h1>
+        <table cellpadding="0" cellspacing="0" border="0" class="display" id="reviews"></table>
+    </div>
+        
+</body>
+</html>
