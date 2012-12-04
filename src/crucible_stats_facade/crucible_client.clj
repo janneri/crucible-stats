@@ -5,7 +5,7 @@
             [clojure.zip :as zip]
             [clj-http.client :as client]))
 
-(defonce token (atom {}))
+(def token (atom {}))
 
 (defn token-param []
   (if-let [tokenStr (:tokenStr @token)]

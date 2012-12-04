@@ -87,8 +87,8 @@
 	      (partial comment-count-filter minComments))
 	    (cache/get-reviews))))
 
-(defpage [:post "/update-cache"] {:keys [username password]}
-  (cache/update-cache username password)
+(defpage [:post "/update-cache"] {:keys [username password sinceDate]}
+  (cache/update-cache username password sinceDate)
   (json/encode {:reviewsloaded (count (cache/get-reviews))}))
 
 (defpage "/cache-status" params
