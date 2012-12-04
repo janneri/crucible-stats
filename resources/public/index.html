@@ -10,6 +10,7 @@
     <script type="text/javascript" src="js/transparency.min.js"></script>
     <script type="text/javascript" src="js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="js/moment.min.js"></script>
+    <script type="text/javascript" src="js/underscore.min.js"></script>
    
     <script type="text/javascript">   
     $(function() {
@@ -41,14 +42,14 @@
         setDataFromUrlToTable("/reviews-per-month", monthlystatToArray, "#reviews-per-month", monthlystatHeaders);
 
         function reviewToArray(json) { 
-        	return [json.id, json.author, moment(json["createDate"]).format("DD.MM.YYYY HH:mm")]; 
+        	return [json.id, json.author, formatDate(json["createDate"])];
         }
         var reviewListHeaders = ["Id", "Author", "Created"];
         setDataFromUrlToTable("/reviews", reviewToArray, "#reviews", reviewListHeaders);    	
     }
 
     function setupFilterChangeHandlers() {
-        filterNames.forEach(function(filterName) {
+        _.each(filterNames, function(filterName) {
             $('#'+filterName).change(function() {
                 destroyDatatables();
                 loadReviewData();
@@ -72,12 +73,17 @@
     function loadCacheStatus() {
         $.getJSON("/cache-status", function(json) {
             
-            json["reviews-updated"] = moment(json["reviews-updated"]).format("DD.MM.YYYY HH:mm");
-            json["comments-updated"] = moment(json["comments-updated"]).format("DD.MM.YYYY HH:mm");
-            json["last-update-started"] = moment(json["last-update-started"]).format("DD.MM.YYYY HH:mm");
+            json["reviews-updated"] = formatDate(json["reviews-updated"]);
+            json["comments-updated"] = formatDate(json["comments-updated"]);
+            json["last-update-started"] = formatDate(json["last-update-started"]);
 
             $(".cache-status").render(json);
         });
+    }
+
+    function formatDate(date) {
+        if (date == null) return "-";
+        return moment(date).format("DD.MM.YYYY HH:mm");
     }
     
     function destroyDatatables() {
@@ -99,7 +105,7 @@
     var filterNames = ["excludedProjects", "includedProjects", "authors", "sinceDate", "minComments"];
     function getReviewFilters() {
         filters = {};
-        filterNames.forEach(function(filterName) {
+        _.each(filterNames, function(filterName) {
             val = $('#'+filterName).val();
             if ( val > 0 || val != "" ) filters[filterName] = val;
         });
@@ -109,8 +115,8 @@
 
     function setDataFromUrlToTable(url, mapper, tableid, headers) {
         $.getJSON(url, getReviewFilters(), function(json) {
-            var data = json.map(mapper);
-            var cols = headers.map(function(header) { return {"sTitle": header}; });
+            var data = _.map(json, mapper);
+            var cols = _.map(headers, function(header) { return {"sTitle": header}; });
 
             $(tableid).dataTable({
                 "aaData": data,
