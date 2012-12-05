@@ -1,5 +1,6 @@
 (ns crucible_stats_facade.server
-  (:require [noir.server :as server]))
+  (:require [noir.server :as server])
+  (:gen-class))
 
 (server/load-views-ns 'crucible_stats_facade.views)
 
