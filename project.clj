@@ -1,5 +1,5 @@
-(defproject crucible_stats_facade "0.1.0-SNAPSHOT"
-            :description "FIXME: write this!"
+(defproject crucible_stats_facade "1.0"
+            :description "Stats facade and UI for Crucible reviews"
             :dependencies [[org.clojure/clojure "1.4.0"]
                            [org.clojure/data.zip "0.1.0"]
                            [cheshire "4.0.0"]
