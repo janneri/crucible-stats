@@ -6,9 +6,9 @@ LOG_FILE=log.txt
 PID=0
 
 check_status() {
-  s=`ps aux | grep crucible | awk '!/grep/ {print $2}'`
+  s=`ps aux | grep ${JAR} | awk '!/grep/ {print $2}'`
    
-  if [ $s ] ; then
+  if [ "$s" ] ; then
     PID=$s
   else
     PID=0
