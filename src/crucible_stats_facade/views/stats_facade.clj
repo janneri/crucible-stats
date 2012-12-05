@@ -38,7 +38,7 @@
        (frequencies usernames))))
 
 (defn review-count-of-author [count-map username]
-  (:count (find-first #(= username (:author %)) count-map)))
+  (nvl (:count (find-first #(= username (:author %)) count-map)) 0))
 
 (defn avg-msg-length-of-author [avg-length-map username]
   (:avg (find-first #(= username (:username %)) avg-length-map)))
@@ -113,3 +113,9 @@
     (user-stats 
       (filtered-reviews params))))
 
+(defpage "/stats" params
+  (json/encode
+    (let [reviews (filtered-reviews params)]
+      {:reviews reviews
+       :monthlyStats (group-reviews-by-month reviews)
+       :userStats (user-stats reviews)}))) 

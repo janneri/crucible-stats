@@ -17,7 +17,7 @@
 (defn base-uri [] 
   (if-let [uri (.getProperty (System/getProperties) "crucible.rest.service.url")]
     uri
-    "http://review.solita.fi/rest-service/"))
+    "http://localhost:8080/rest-service/"))
 
 (defn login-uri [username password] (str (base-uri) "auth-v1/login?userName=" username "&password=" password))
 (defn projects-uri [] (str (base-uri) "projects-v1?" (token-param)))

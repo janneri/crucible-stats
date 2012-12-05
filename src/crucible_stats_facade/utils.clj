@@ -24,3 +24,6 @@
 
 (defn now []
   (java.util.Date.))
+
+(defn nvl [value default-if-null]
+  (if value value default-if-null))

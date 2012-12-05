@@ -33,19 +33,23 @@
         	return [json.username, json.authoredreviewcount, json.commentcount, json.avgmessagelength]; 
         }
         var userstatHeaders = ["Username", "Authored Reviews", "Total Comments", "Avg Message Length"];
-        setDataFromUrlToTable("/userstats", userstatToArray, "#userstats", userstatHeaders);
 
         function monthlystatToArray(json) { 
         	return [json.year, json.month, json.count]; 
         }
         var monthlystatHeaders = ["Year", "Month", "Review Count"];
-        setDataFromUrlToTable("/reviews-per-month", monthlystatToArray, "#reviews-per-month", monthlystatHeaders);
-
+        
         function reviewToArray(json) { 
         	return [json.id, json.author, formatDate(json["createDate"])];
         }
         var reviewListHeaders = ["Id", "Author", "Created"];
-        setDataFromUrlToTable("/reviews", reviewToArray, "#reviews", reviewListHeaders);    	
+        
+        $.getJSON("/stats", getReviewFilters(), function(json) {
+            setupDataTable(json.userStats, userstatToArray, "#userstats", userstatHeaders);
+            setupDataTable(json.monthlyStats, monthlystatToArray, "#reviews-per-month", monthlystatHeaders);
+            setupDataTable(json.reviews, reviewToArray, "#reviews", reviewListHeaders);
+        });
+
     }
 
     function setupFilterChangeHandlers() {
@@ -113,15 +117,13 @@
     }
 
 
-    function setDataFromUrlToTable(url, mapper, tableid, headers) {
-        $.getJSON(url, getReviewFilters(), function(json) {
-            var data = _.map(json, mapper);
-            var cols = _.map(headers, function(header) { return {"sTitle": header}; });
+    function setupDataTable(json, mapper, tableid, headers) {
+        var data = _.map(json, mapper);
+        var cols = _.map(headers, function(header) { return {"sTitle": header}; });
 
-            $(tableid).dataTable({
-                "aaData": data,
-                "aoColumns": cols
-            });
+        $(tableid).dataTable({
+            "aaData": data,
+            "aoColumns": cols
         });
     }
 
