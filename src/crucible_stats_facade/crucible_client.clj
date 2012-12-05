@@ -26,7 +26,7 @@
 
 
 (defn login [username password]
-  (xml/parse (login-uri "foo" "bar")))
+  (xml/parse (login-uri username password)))
 
 (defn parse-token [xml]
   (let [zipped (zip/xml-zip xml)]
