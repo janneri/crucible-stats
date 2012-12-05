@@ -74,12 +74,12 @@
   (xml-comments id))
 
 (defn mock-reviews []
-  {:reviews [{:reviewData {:author {:userName "pertti"} :createDate "2012-01-15T15:59:49.855+1000" :permaId {:id "CR-1"} :projectKey "CR"}}
-             {:reviewData {:author {:userName "pertti"} :createDate "2012-01-16T15:59:49.855+1000" :permaId {:id "CR-2"} :projectKey "CR"}}
-             {:reviewData {:author {:userName "purtti"} :createDate "2012-02-15T15:59:49.855+1000" :permaId {:id "CR-3"} :projectKey "CR"}}
-             {:reviewData {:author {:userName "purtti"} :createDate "2012-02-16T15:59:49.855+1000" :permaId {:id "PUB-1"} :projectKey "PUB"}}
-             {:reviewData {:author {:userName "pertti"} :createDate "2012-03-15T15:59:49.855+1000" :permaId {:id "PUB-2"} :projectKey "PUB"}}]})
+  {:reviewData [{:author {:userName "pertti"} :createDate "2012-01-15T15:59:49.855+1000" :permaId {:id "CR-1"} :projectKey "CR"}
+                {:author {:userName "pertti"} :createDate "2012-01-16T15:59:49.855+1000" :permaId {:id "CR-2"} :projectKey "CR"}
+                {:author {:userName "purtti"} :createDate "2012-02-15T15:59:49.855+1000" :permaId {:id "CR-3"} :projectKey "CR"}
+                {:author {:userName "purtti"} :createDate "2012-02-16T15:59:49.855+1000" :permaId {:id "PUB-1"} :projectKey "PUB"}
+                {:author {:userName "pertti"} :createDate "2012-03-15T15:59:49.855+1000" :permaId {:id "PUB-2"} :projectKey "PUB"}]})
 
-(defpage "/rest-service/reviews-v1" []
+(defpage "/rest-service/reviews-v1.json" []
          (json/encode (mock-reviews)))
 

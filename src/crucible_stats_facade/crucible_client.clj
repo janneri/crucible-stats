@@ -17,11 +17,11 @@
 (defn base-uri [] 
   (if-let [uri (.getProperty (System/getProperties) "crucible.rest.service.url")]
     uri
-    "http://localhost:8080/rest-service/"))
+    "http://review.solita.fi/rest-service/"))
 
 (defn login-uri [username password] (str (base-uri) "auth-v1/login?userName=" username "&password=" password))
 (defn projects-uri [] (str (base-uri) "projects-v1?" (token-param)))
-(defn reviews-uri [] (str (base-uri) "reviews-v1?" (token-param) "&state=" valid-review-states))
+(defn reviews-uri [] (str (base-uri) "reviews-v1.json?" (token-param) "&state=" valid-review-states))
 (defn comments-uri [review-id] (str (base-uri) "reviews-v1/" review-id "/comments?" (token-param)))
 
 
@@ -78,8 +78,8 @@
 
 (defn reviews []
   (let [json-data (json/parse-string (:body (client/get (reviews-uri))) true)
-        reviews (:reviews json-data)]
-    (for [review (map :reviewData reviews)] 
+        reviews (:reviewData json-data)]
+    (for [review reviews] 
       {:id ((comp :id :permaId) review)
        :projectKey (:projectKey review)
        :author ((comp :userName :author) review)
