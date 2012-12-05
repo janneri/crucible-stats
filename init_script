@@ -1,0 +1,75 @@
+#!/bin/sh
+
+JAR=target/crucible_stats_facade-1.0-standalone.jar
+START_COMMAND="java -Dcrucible.rest.service.url=http://localhost:8080/rest-service/ -jar $JAR"
+LOG_FILE=log.txt
+PID=0
+
+check_status() {
+  s=`ps aux | grep crucible | awk '!/grep/ {print $2}'`
+   
+  if [ $s ] ; then
+    PID=$s
+  else
+    PID=0
+  fi
+}
+
+start() {
+  check_status
+
+  if [ $PID -ne 0 ] ; then
+    echo "The application is already started"
+    exit 1
+  fi
+
+  echo "Starting application with ${START_COMMAND}"
+
+  # Redirects default and error output to a log file
+  ${START_COMMAND} >> ${LOG_FILE} 2>&1 &
+  echo "OK"
+}
+
+stop() {
+  check_status
+
+  if [ $PID -eq 0 ] ; then
+    echo "Application is already stopped"
+    exit 1
+  fi
+
+  echo "Stopping application: "
+  kill -9 $PID &
+  echo "OK"
+}
+
+status() {
+  check_status
+
+  if [ $PID -ne 0 ] ; then
+    echo "Application is started with pid $PID"
+  else
+    echo "Application is stopped"
+  fi
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    status
+    ;;
+  restart|reload)
+    stop
+    start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|reload|status}"
+    exit 1
+esac
+
+exit 0
