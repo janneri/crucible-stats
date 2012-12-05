@@ -35,12 +35,20 @@ Assuming [Leiningen](https://github.com/technomancy/leiningen) is already instal
 ```bash
 lein deps
 lein run
-or 
-lein uberjar
-java -jar target/rpi-challenger-*-standalone.jar
 ```
 
-Then open <http://localhost:8080/> in a web browser.
+You can also run it as a daemon (standalone java application) using the included init_script
+
+```bash
+# create the jar (jetty6 embedded)
+lein uberjar
+
+# set up the port and the crucible url
+nano init_script
+
+# start
+sh init_script start
+```
 
 ## License
 
