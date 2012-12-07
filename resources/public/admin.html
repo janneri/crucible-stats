@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<html>
+<head>
+    <title>Admin UI for the Crucible Stats Facade</title>
+    <link rel="stylesheet" href="css/reset.css" type="text/css" />
+    <link rel="stylesheet" href="css/style.css" type="text/css" />
+    
+    <script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
+    <script type="text/javascript" src="js/transparency.min.js"></script>
+    <script type="text/javascript" src="js/moment.min.js"></script>
+    <script type="text/javascript" src="js/underscore.min.js"></script>
+   
+    <script type="text/javascript">   
+    $(function() {
+        setupLoaderAnimation();
+        loadCacheStatus();
+
+        $("#update-cache").click(function (e) {
+            $('#last-update-started').text(moment().format("DD.MM.YYYY HH:mm"));
+            e.preventDefault();
+            updateReviewCache();
+        });
+    });
+
+    function setupLoaderAnimation() {
+        $('#loader').hide();
+        jQuery.ajaxSetup({
+            beforeSend: function() {                
+                $('#loader').show();
+            },
+            complete: function(){
+                $('#loader').hide();
+            },
+            success: function() {}
+        });
+    }
+
+    function loadCacheStatus() {
+        $.getJSON("/cache-status", function(json) {
+            
+            json["reviews-updated"] = formatDate(json["reviews-updated"]);
+            json["comments-updated"] = formatDate(json["comments-updated"]);
+            json["last-update-started"] = formatDate(json["last-update-started"]);
+
+            $(".cache-status").render(json);
+        });
+    }
+
+    function formatDate(date) {
+        if (date == null) return "-";
+        return moment(date).format("DD.MM.YYYY HH:mm");
+    }
+    
+    function updateReviewCache() {
+        var data = $("#cacheform").serialize();
+        $.post("/update-cache", data, function(json) {
+            loadCacheStatus();
+        });
+        return false;
+    }
+
+    </script>
+</head>
+<body id="statsfacade">
+
+    <div class="wrapper cache-status">
+        <h1>Cache status:</h1>
+        <div>Reviews updated: <span class="reviews-updated"></span>, 
+             comments updated: <span class="comments-updated"></span>,
+             last update started at: <span id="last-update-started"></span>
+             <span id="loader">
+                 <img alt="Loading, please wait.." src="/img/ajax-loader.gif" />
+             <span>
+        </div>
+        
+        <form id="cacheform">
+            <label for="username">username</label>
+            <input id="username" name="username">
+            <label for="password">password</label>
+            <input id="password" type="password" name="password">
+            <label for="since">since (yyyy-mm-dd)</label>
+            <input id="since" name="sinceDate" value="2012-01-01" />
+            <button id="update-cache">Update cache</button>
+            <!-- <span class="warn">Note: Slow!</span> -->
+        </form>
+    </div>
+        
+</body>
+</html>

@@ -1,6 +1,7 @@
 (ns crucible_stats_facade.views.stats_facade
   (:require [cheshire.core :as json]
-            [crucible_stats_facade.review_cache :as cache])
+            [crucible_stats_facade.review_cache :as cache]
+            [noir.response :as resp])
   (:use [noir.core :only [defpage]]
         [crucible_stats_facade.utils]))
 
@@ -119,3 +120,6 @@
       {:reviews reviews
        :monthlyStats (group-reviews-by-month reviews)
        :userStats (user-stats reviews)}))) 
+
+(defpage "/" []
+  (resp/redirect "/index.html"))

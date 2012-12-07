@@ -16,13 +16,6 @@
     $(function() {
         setupLoaderAnimation();
         loadCacheStatus();
-
-        $("#update-cache").click(function (e) {
-            $('#last-update-started').text(moment().format("DD.MM.YYYY HH:mm"));
-            e.preventDefault();
-            updateReviewCache();
-        });
-
         loadReviewData();
         setupFilterChangeHandlers();
 
@@ -96,16 +89,6 @@
         $('#reviews').dataTable().fnDestroy();
     }
 
-    function updateReviewCache() {
-        var data = $("#cacheform").serialize();
-        $.post("/update-cache", data, function(json) {
-            loadCacheStatus();
-            destroyDatatables();
-	        loadReviewData();          
-        });
-        return false;
-    }
-
     var filterNames = ["excludedProjects", "includedProjects", "authors", "sinceDate", "minComments"];
     function getReviewFilters() {
         filters = {};
@@ -115,7 +98,6 @@
         });
         return filters;
     }
-
 
     function setupDataTable(json, mapper, tableid, headers) {
         var data = _.map(json, mapper);
@@ -131,30 +113,11 @@
 </head>
 <body id="statsfacade">
 
-    <div class="wrapper cache-status">
-        <h1>Cache status:</h1>
-        <div>Reviews updated: <span class="reviews-updated"></span>, 
-             comments updated: <span class="comments-updated"></span>,
-             last update started at: <span id="last-update-started"></span>
-             <span id="loader">
-                 <img alt="Loading, please wait.." src="/img/ajax-loader.gif" />
-             <span>
-        </div>
-        
-        <form id="cacheform">
-            <label for="username">username</label>
-            <input id="username" name="username">
-            <label for="password">password</label>
-            <input id="password" type="password" name="password">
-            <label for="since">since (yyyy-mm-dd)</label>
-            <input id="since" name="sinceDate" value="2012-01-01" />
-            <button id="update-cache">Update cache</button>
-            <!-- <span class="warn">Note: Slow!</span> -->
-        </form>
+    <div class="wrapper cache-status">        
     </div>
 
     <div class="wrapper">
-        <p>Filter reviews/stats below:</p>
+        <h1>Review filters:</h1>        
         <div>
             <span>since (yyyy-mm-dd): </span> <input id="sinceDate" value="2012-01-01" />
             <span>min comments: </span> <input id="minComments" value="0" />
@@ -177,6 +140,18 @@
     <div class="wrapper">
         <h1>Reviews:</h1>
         <table cellpadding="0" cellspacing="0" border="0" class="display" id="reviews"></table>
+    </div>
+    
+    <div class="wrapper">
+        <hr>
+        <div class="cache-status">
+             Reviews updated: <span class="reviews-updated"></span>, 
+             comments updated: <span class="comments-updated"></span>,
+             last update started at: <span id="last-update-started"></span>
+             <span id="loader">
+                 <img alt="Loading, please wait.." src="/img/ajax-loader.gif" />
+             <span>
+        </div>
     </div>
         
 </body>
