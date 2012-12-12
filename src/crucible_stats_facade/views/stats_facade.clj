@@ -5,18 +5,41 @@
   (:use [noir.core :only [defpage]]
         [crucible_stats_facade.utils]))
 
-(defn comments-for-review-ids [review-ids]
-  (filter #(in? review-ids (:review-id %)) (cache/get-comments)))
+(defn comments-for-review [review]
+  (find-first #(= (:id review) (:review-id %)) (cache/get-comments)))
 
 (defn comments-for-reviews [review-vector]
-  (comments-for-review-ids (map :id review-vector)))
+  (->> review-vector
+    (map comments-for-review)
+    (mapcat :comments)))
+
+(defn year-month [ym] 
+  ((juxt :year :month) ym))
+  
+(defn pad-missing-months [accu reviews-by-month]
+  (let [equal-year-month (fn [m1 m2] (= (year-month m1) (year-month m2)))
+        prev-rolled (-> (last accu) (roll-month) (assoc :count 0))
+        current (first reviews-by-month)]
+    (if (empty? reviews-by-month)
+      accu
+      (if (equal-year-month prev-rolled current)
+        (pad-missing-months (conj accu current) (drop 1 reviews-by-month))
+        (pad-missing-months (conj accu prev-rolled) reviews-by-month)))))
+      
 
 (defn group-reviews-by-month [review-vector]
-  (for [[[year month] dates] (group-by (juxt :year :month)
-                                       (map (comp to-date :createDate) review-vector))]
-    {:year year
-     :month month
-     :count (count dates)}))
+  (let [grouped 
+    (sort-by (juxt :year :month) 
+      (for [[[year month] dates] (->> review-vector
+                                 (map (comp to-year-month :createDate))
+                                 (group-by (juxt :year :month)))]
+      {:year year
+       :month month
+       :count (count dates)}))]
+    (if (empty? grouped) 
+      []
+      (pad-missing-months [(first grouped)] (drop 1 grouped)))))
+  
 
 (defn group-reviews-by-author [review-vector]
   (for [[author count] (->> review-vector
@@ -25,7 +48,7 @@
     {:author author, :count count}))
 
 (defn avg-comment-length-by-users [review-vector]
-  (let [comments (mapcat :comments (comments-for-reviews review-vector))
+  (let [comments (comments-for-reviews review-vector)
         users (set (map :user comments))
         comments-of-usr (fn [user clist] (filter #(= user (:user %)) clist))]
     (map (fn [user] {:username user
@@ -34,9 +57,10 @@
       users)))
 
 (defn count-comments-by-users [review-vector]
-  (let [usernames (map :user (mapcat :comments (comments-for-reviews review-vector)))]
-    (map (fn [[name count]] {:username name :commentcount count}) 
-       (frequencies usernames))))
+  (for [[username commentcount] (->> (comments-for-reviews review-vector)
+                                  (map :user)
+                                  frequencies)]
+    {:username username :commentcount commentcount}))
 
 (defn review-count-of-author [count-map username]
   (nvl (:count (find-first #(= username (:author %)) count-map)) 0))
@@ -56,11 +80,6 @@
     (predicate-fn project-keys (:projectKey review))
     true))
 
-(defn created-since-filter [since-str review]
-  (if since-str
-    (> 0 (compare since-str (to-str (to-date (:createDate review)))))
-    true))
-
 (defn author-filter [authors-str review]
   (if-let [authors (null-safe-split authors-str #"," false)]
     (in? authors (:author review))
@@ -68,7 +87,7 @@
 
 (defn comment-count-filter [comment-count-str review]
   (if comment-count-str
-    (>= (:comment-count (first (comments-for-review-ids [(:id review)]))) 
+    (>= (:comment-count (comments-for-review review)) 
         (read-string comment-count-str))
     true))
 
@@ -81,7 +100,7 @@
   (let [{:keys [excludedProjects includedProjects authors sinceDate minComments]} params]
     (filter 
 	    (every-pred 
-	      (partial created-since-filter sinceDate)
+	      (partial created-since-filter (to-datetime-midnight sinceDate))
 	      (partial project-filter not-in? excludedProjects)
 	      (partial project-filter in? includedProjects)
         (partial author-filter authors)
@@ -89,8 +108,8 @@
 	    (cache/get-reviews))))
 
 (defpage [:post "/update-cache"] {:keys [username password sinceDate]}
-  (cache/update-cache username password sinceDate)
-  (json/encode {:reviewsloaded (count (cache/get-reviews))}))
+  (cache/update-cache username password (to-datetime-midnight sinceDate))
+  (json/encode (cache/cache-status)))
 
 (defpage "/cache-status" params
   (json/encode (cache/cache-status))) 
@@ -117,7 +136,7 @@
 (defpage "/stats" params
   (json/encode
     (let [reviews (filtered-reviews params)]
-      {:reviews reviews
+      {:reviews (map #(assoc % :createDate (.toDate (:createDate %))) reviews)
        :monthlyStats (group-reviews-by-month reviews)
        :userStats (user-stats reviews)}))) 
 

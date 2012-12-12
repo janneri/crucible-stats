@@ -6,20 +6,15 @@
 (def cached-data (atom {:reviews-updated nil :reviews nil
                         :comments-updated nil :comments nil}))
 
-(defn created-since-filter [since-str review]
-  (if since-str
-    (> 0 (compare since-str (to-str (to-date (:createDate review)))))
-    true))
-
 (defn cache-status []
   {:reviews-updated (:reviews-updated @cached-data)
    :review-count (count (:reviews @cached-data))
    :comments-updated (:comments-updated @cached-data)
    :last-update-started (:last-update-started @cached-data)})
 
-(defn update-cached-reviews [since-date-str]
+(defn update-cached-reviews [since-date]
   (swap! cached-data assoc :reviews-updated (now) 
-         :reviews (filter (partial created-since-filter since-date-str) (client/reviews))))
+         :reviews (filter (partial created-since-filter since-date) (client/reviews))))
 
 (defn get-reviews []
   (if-let [reviews (:reviews @cached-data)]
@@ -47,12 +42,12 @@
     comments
     []))
 
-(defn update-cache [username password sinceDate]
+(defn update-cache [username password since-date]
   (println "updating cache started at" (local-now))
   (swap! cached-data assoc :last-update-started (now))
   (Thread/sleep 5000) ;todo remove  
   (client/login-and-get-token username password)
   (println "got token" (client/token-param))
-  (update-cached-reviews sinceDate)
+  (update-cached-reviews since-date)
   (update-cached-comments (get-review-ids))
   (println "done loading" (count (get-reviews)) "reviews at" (local-now)))

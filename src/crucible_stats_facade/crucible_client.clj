@@ -83,5 +83,5 @@
       {:id ((comp :id :permaId) review)
        :projectKey (:projectKey review)
        :author ((comp :userName :author) review)
-       :createDate (:createDate review)})))
+       :createDate (org.joda.time.DateTime. (:createDate review))})))
 

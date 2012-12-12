@@ -9,9 +9,12 @@
     <script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
     <script type="text/javascript" src="js/transparency.min.js"></script>
     <script type="text/javascript" src="js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="js/dataTables.custom.sort.js" ></script>
     <script type="text/javascript" src="js/moment.min.js"></script>
     <script type="text/javascript" src="js/underscore.min.js"></script>
-   
+    <script type="text/javascript" src="js/RGraph.common.core.js" ></script>
+    <script type="text/javascript" src="js/RGraph.bar.js" ></script>
+    
     <script type="text/javascript">   
     $(function() {
         setupLoaderAnimation();
@@ -26,29 +29,39 @@
         	return [json.username, json.authoredreviewcount, json.commentcount, json.avgmessagelength]; 
         }
         var userstatHeaders = ["Username", "Authored Reviews", "Total Comments", "Avg Message Length"];
-
-        function monthlystatToArray(json) { 
-        	return [json.year, json.month, json.count]; 
-        }
-        var monthlystatHeaders = ["Year", "Month", "Review Count"];
         
         function reviewToArray(json) { 
         	return [json.id, json.author, formatDate(json["createDate"])];
         }
-        var reviewListHeaders = ["Id", "Author", "Created"];
+        var reviewListHeaders = [{sTitle: "Id", sType: "string"}, 
+                                 {sTitle: "Author", sType: "string"},
+                                 {sTitle: "Created", sType: "date-fi"}];
         
         $.getJSON("/stats", getReviewFilters(), function(json) {
             setupDataTable(json.userStats, userstatToArray, "#userstats", userstatHeaders);
-            setupDataTable(json.monthlyStats, monthlystatToArray, "#reviews-per-month", monthlystatHeaders);
             setupDataTable(json.reviews, reviewToArray, "#reviews", reviewListHeaders);
-        });
 
+            var bar = new RGraph.Bar('monthlygraph', _.map(json.monthlyStats, function(stat) { return stat.count; }));
+            bar.Set('labels', _.map(json.monthlyStats, function(stat) { 
+                if (stat.month == 1) {
+                  return stat.month + "/" + stat.year;     
+                }
+            }));
+
+            bar.Set('chart.gutter.left', 40);
+            bar.Set('chart.title.yaxis', "Reviews");
+            bar.Set('chart.title.yaxis.size', 8);
+            bar.Set('chart.title.yaxis.bold', false);
+            bar.Set('chart.title.yaxis.pos', 0.1);            
+            bar.Draw();
+        });    
     }
 
     function setupFilterChangeHandlers() {
         _.each(filterNames, function(filterName) {
             $('#'+filterName).change(function() {
                 destroyDatatables();
+                RGraph.Reset(document.getElementById('monthlygraph'));
                 loadReviewData();
             });
         });
@@ -84,7 +97,6 @@
     }
     
     function destroyDatatables() {
-        $('#reviews-per-month').dataTable().fnDestroy();
         $('#userstats').dataTable().fnDestroy();
         $('#reviews').dataTable().fnDestroy();
     }
@@ -99,10 +111,17 @@
         return filters;
     }
 
-    function setupDataTable(json, mapper, tableid, headers) {
-        var data = _.map(json, mapper);
-        var cols = _.map(headers, function(header) { return {"sTitle": header}; });
-
+    function setupDataTable(json, datamapper, tableid, headers) {
+        var data = _.map(json, datamapper);
+        var cols = _.map(headers, function(header) { 
+            if (typeof header.sType === "undefined") {
+              return {"sTitle": header}; 
+            }
+            else {
+              return {"sTitle": header.sTitle, "sType": header.sType}; 
+            }
+        });
+        
         $(tableid).dataTable({
             "aaData": data,
             "aoColumns": cols
@@ -129,7 +148,7 @@
 
     <div class="wrapper">
         <h1>Monthly stats:</h1>
-        <table cellpadding="0" cellspacing="0" border="0" class="display" id="reviews-per-month"></table>
+        <canvas id="monthlygraph" width="1000" height="250">[No canvas support]</canvas>
     </div>
 
     <div class="wrapper">
